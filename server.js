@@ -16,7 +16,6 @@ defaults.headers.put['Content-Type'] = DATATYPE;
 const PUTURL = "https://api.clickup.com/api/v2/task/";
 
 /* ~ Settings and Query Parameters ~ */
-    let HOST;
     let PORT;
     let SEND;
     let BILLOMATID;
@@ -43,7 +42,7 @@ async function main(){
 
     //set the http port and host, the parameters may be configured in the settings.json file
     //I havent testet other ports than localhost yet, this may be changed when its going live
-    var listener = app.listen(PORT,HOST, () => {
+    var listener = app.listen(PORT, () => {
         console.log("Listening on: http://"+listener.address().address+":"+listener.address().port);
     });
 
@@ -570,7 +569,6 @@ async function loadSettings(){
                 MWST = settings.mwst;
                 BRUTTO = settings.brutto;
                 //server settings
-                HOST = settings.host;
                 PORT = settings.port;
                 console.log("settings loaded");
                 resolve(settings);
