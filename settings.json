@@ -1,0 +1,14 @@
+{
+    "send":true,
+    "listID":144576183,
+    "host":"127.0.0.1",
+    "port":8080,
+    "client":"client",
+    "quotation_number":"quotation #",
+    "invoice_number":"invoice #",
+    "netto":"netto",
+    "account":"account",
+    "invoice_date":"invoice date",
+    "mwst":"mwst",
+    "brutto":"brutto"
+}
