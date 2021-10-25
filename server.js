@@ -42,10 +42,14 @@ async function main(){
 
     //set the http port and host, the parameters may be configured in the settings.json file
     //I havent testet other ports than localhost yet, this may be changed when its going live
-    var listener = app.listen(PORT, () => {
-        console.log("Listening on: http://"+listener.address().address+":"+listener.address().port);
+    var listener = app.listen(process.env.PORT || 3000, () => {
+        console.log("Listening on Port: "+ listener.address().port);
     });
 
+    app.get("/", function (req, res) {
+        res.send("<h1>Hello World!</h1>")
+    })
+    
     //this gets called on each post request
     app.post('/json',(req,res)=>{
         console.log(req.body);
