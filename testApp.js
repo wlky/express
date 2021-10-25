@@ -3,7 +3,7 @@ const { defaults, post, put, get } = pkg;
 import pkg from 'axios';
 import express, { json, response } from 'express';
 import fs from 'fs';
-var helmet = require('helmet');
+import helmet from 'helmet';
 
 const app = express();
 

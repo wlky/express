@@ -1,6 +1,10 @@
 {
   "name": "clickuphtml",
   "version": "1.0.0",
+  "engines": {
+    "node": "v14.18.1"
+  },
+  "private": "true",
   "description": "",
   "type": "module",
   "main": "testApp.js",
