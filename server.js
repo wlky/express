@@ -502,7 +502,6 @@ function createValueMap(jsonFromBillomat){
 //Billomat: GET "https://"+BILLOMATID+".billomat.net/api/clients/"+clientId+"\?format=json"
 //Find client_number
 function getClientFromId(clientId){
-    /*
     return new Promise((resolve,reject) => {
         if(clientId == undefinded) reject ("");
         let url = "https://"+BILLOMATID+".billomat.net/api/clients/"+clientId+"\?format=json"
@@ -511,15 +510,12 @@ function getClientFromId(clientId){
         .then(function(response){
             resolve(response.data.client.name);
         });
-    });
-    */
-    return "not implemented yet";
+    })
 }
 
 //Billomat: GET "https://"+BILLOMATID+".billomat.net/api/offers/"+offerId+"\?format=json"
 //Find offer_number
 function getOfferFromId(offerId){
-    /*
     return new Promise((resolve,reject) => {
         if(offerId == undefinded) reject ("No offer yet");
         let url = "https://"+BILLOMATID+".billomat.net/api/offers/"+offerId+"\?format=json"
@@ -529,8 +525,6 @@ function getOfferFromId(offerId){
             resolve(response.data.offer.offer_number);
         });
     });
-    */
-    return "AN"+offerId;
 }
 
 //this does a get request on https://api.clickup.com/api/v2/team/2671386/ and filter the incoming response.data.team.members to get assigneeName == user.username
@@ -540,7 +534,8 @@ function getAssigneeId(assigneeName){
         .then(function(response){
             response.data.team.members.forEach(member => {
                 if(member.user.username == assigneeName){
-                    resolve(member.user.id);
+                    //resolve(member.user.id);
+                    resolve("not found");
                 }
             });
             reject("not found");

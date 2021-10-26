@@ -2,12 +2,12 @@
     "send":true,
     "listID":150459226,
     "port":3000,
-    "client":"client",
-    "quotation_number":"quotation #",
-    "invoice_number":"invoice #",
-    "netto":"netto",
-    "account":"account",
-    "invoice_date":"invoice date",
-    "mwst":"mwst",
-    "brutto":"brutto"
+    "client":"CLIENT",
+    "quotation_number":"QUOTATION #",
+    "invoice_number":"INVOICE #",
+    "netto":"NETTO",
+    "account":"ACCOUNT",
+    "invoice_date":"INVOICE DATE",
+    "mwst":"MWST",
+    "brutto":"BRUTTO"
 }
