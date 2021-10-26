@@ -217,7 +217,7 @@ function extractFromBillomatInvoice(jsonFromBillomat){
     })
     valueMap.set('netto',jsonFromBillomat.invoice.total_net_unreduced);
     //needs to be get from billomat to encrypt id
-    getClientFromId(jsonFromBillomat.offer.client_id).then(function(results){
+    getClientFromId(jsonFromBillomat.invoice.client_id).then(function(results){
         if(results!="not found"){
             valueMap.set('client',results);
         }
@@ -514,35 +514,35 @@ function createValueMap(jsonFromBillomat){
 //Billomat: GET "https://"+BILLOMATID+".billomat.net/api/clients/"+clientId+"\?format=json"
 //Find client_number
 function getClientFromId(clientId){
-    return new Promise((resolve,reject) => {
-        if(clientId == undefinded) reject ("");
+    return new Promise((resolve) => {
+        if(clientId == undefined) resolve ("");
         let url = "https://"+BILLOMATID+".billomat.net/api/clients/"+clientId+"\?format=json"
         get(url)
         .then(function(response){
             resolve(response.data.client.name);
         });
-        reject("not found");
+        resolve("not found");
     })
 }
 
 //Billomat: GET "https://"+BILLOMATID+".billomat.net/api/offers/"+offerId+"\?format=json"
 //Find offer_number
 function getOfferFromId(offerId){
-    return new Promise((resolve,reject) => {
-        if(offerId == undefinded) reject ("No offer yet");
+    return new Promise((resolve) => {
+        if(offerId == undefined) resolve ("No offer yet");
         let url = "https://"+BILLOMATID+".billomat.net/api/offers/"+offerId+"\?format=json"
         let offerNumber;
         get(url)
         .then(function(response){
             resolve(response.data.offer.offer_number);
         });
-        reject("not found");
+        resolve("not found");
     });
 }
 
 //this does a get request on https://api.clickup.com/api/v2/team/2671386/ and filter the incoming response.data.team.members to get assigneeName == user.username
 function getAssigneeId(assigneeName){
-    return new Promise((resolve,reject) => {
+    return new Promise((resolve) => {
         get("https://api.clickup.com/api/v2/team/2671386/")
         .then(function(response){
             response.data.team.members.forEach(member => {
@@ -551,7 +551,7 @@ function getAssigneeId(assigneeName){
                     resolve("not found");
                 }
             });
-            reject("not found");
+            resolve("not found");
         })
     })
 }
