@@ -47,7 +47,7 @@ async function main(){
     });
 
     app.get("/", function (req, res) {
-        res.send("<h1>Hello World!</h1>")
+        res.send("<h1>Hello World 1</h1>")
     })
     
     //this gets called on each post request
