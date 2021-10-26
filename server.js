@@ -210,10 +210,18 @@ function extractFromBillomatInvoice(jsonFromBillomat){
     valueMap.set('status',jsonFromBillomat.invoice.status);
     valueMap.set('invoice #',jsonFromBillomat.invoice.invoice_number);
     //needs to be get from billomat to encrypt id
-    valueMap.set('quotation #',getOfferFromId(jsonFromBillomat.invoice.offer_id));
+    getOfferFromId(jsonFromBillomat.invoice.offer_id).then(function(results){
+        if(results!="not found"){
+            valueMap.set('quotation #',results);
+        }
+    })
     valueMap.set('netto',jsonFromBillomat.invoice.total_net_unreduced);
     //needs to be get from billomat to encrypt id
-    valueMap.set('client',getClientFromId(jsonFromBillomat.invoice.client_id));
+    getClientFromId(jsonFromBillomat.offer.client_id).then(function(results){
+        if(results!="not found"){
+            valueMap.set('client',results);
+        }
+    })
     //need to be saved as Date.getTime() because Billomat only accpts time in millis 
     valueMap.set('due date',Date.parse(jsonFromBillomat.invoice.due_date));
     valueMap.set('invoice date',Date.parse(jsonFromBillomat.invoice.date))
@@ -266,7 +274,11 @@ function extractFromBillomatOffer(jsonFromBillomat){
     //needs to be get from billomat to encrypt id
     valueMap.set('quotation #',jsonFromBillomat.offer.offer_number);
     //needs to be get from billomat to encrypt id
-    valueMap.set('client',getClientFromId(jsonFromBillomat.offer.client_id));
+    getClientFromId(jsonFromBillomat.offer.client_id).then(function(results){
+        if(results!="not found"){
+            valueMap.set('client',results);
+        }
+    })
 
     valueMap.set('netto',jsonFromBillomat.offer.total_net_unreduced);
 
@@ -505,11 +517,11 @@ function getClientFromId(clientId){
     return new Promise((resolve,reject) => {
         if(clientId == undefinded) reject ("");
         let url = "https://"+BILLOMATID+".billomat.net/api/clients/"+clientId+"\?format=json"
-        let clientNumber;
         get(url)
         .then(function(response){
             resolve(response.data.client.name);
         });
+        reject("not found");
     })
 }
 
@@ -524,6 +536,7 @@ function getOfferFromId(offerId){
         .then(function(response){
             resolve(response.data.offer.offer_number);
         });
+        reject("not found");
     });
 }
 
