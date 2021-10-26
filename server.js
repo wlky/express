@@ -82,7 +82,7 @@ function createJsonForClickUp(valueMap,customFieldIds){
             //task status
             "status":valueMap.get('status'),
 
-            "assignees": [ valueMap.get('assignees') ], 
+            //"assignees": [ valueMap.get('assignees') ], 
             //needed -> the custom fields in clickUp work only if this is aviable
             "check_required_custom_fields": true,
             //due date of the task
@@ -110,14 +110,14 @@ function createJsonForClickUp(valueMap,customFieldIds){
                     "id":customFieldIds.get(NETTO), 
                     "value": valueMap.get('netto')
                 }, 
-                { 
+                /*{ 
                     "id":customFieldIds.get(ACCOUNT), 
                     "value": {"add":[ valueMap.get('account') ]}
-                }, 
+                }, */
                 { 
                     "id":customFieldIds.get(INVOICEDATE), 
                     "value": valueMap.get('invoice date')
-                },
+                }/*,
                 { 
                     "id":customFieldIds.get(MWST), 
                     //calculates 19% of the "netto" price
@@ -127,7 +127,7 @@ function createJsonForClickUp(valueMap,customFieldIds){
                     "id":customFieldIds.get(BRUTTO), 
                     //calculates the "brutto" price
                     "value":"field(\"netto\")*1.19"
-                }
+                }*/
             ] 
         } 
     );
@@ -146,7 +146,7 @@ function createUpdateJsonForClickUp(valueMap,customFieldIds){
             //task status
             "status":valueMap.get('status'),
 
-            "assignees": {"add":[ valueMap.get('assignees') ]}, 
+            //"assignees": {"add":[ valueMap.get('assignees') ]}, 
             //needed -> the custom fields in clickUp work only if this is aviable
             "check_required_custom_fields": true,
             //due date of the task
@@ -174,14 +174,14 @@ function createUpdateJsonForClickUp(valueMap,customFieldIds){
                     "id":customFieldIds.get('netto'), 
                     "value": valueMap.get('netto')
                 }, 
-                { 
+                /*{ 
                     "id":customFieldIds.get('account'), 
                     "value": valueMap.get('account')
-                }, 
+                },*/ 
                 { 
                     "id":customFieldIds.get('invoice date'), 
                     "value": valueMap.get('invoice date')
-                },
+                }/*,
                 { 
                     "id":customFieldIds.get('mwst'), 
                     //calculates 19% of the "netto" price
@@ -191,7 +191,7 @@ function createUpdateJsonForClickUp(valueMap,customFieldIds){
                     "id":customFieldIds.get('brutto'), 
                     //calculates the "brutto" price
                     "value":"field(\"netto\")*1.19"
-                }
+                }*/
             ] 
         } 
     );
@@ -208,7 +208,7 @@ function extractFromBillomatInvoice(jsonFromBillomat){
     let valueMap = new Map();
     valueMap.set('name',jsonFromBillomat.invoice.label);
     valueMap.set('status',jsonFromBillomat.invoice.status);
-    valueMap.set('invoice #',jsonFromBillomat.invoice.invoice_number);
+    valueMap.set('invoice #',jsonFromBillomat.invoice.number);
     //needs to be get from billomat to encrypt id
     getOfferFromId(jsonFromBillomat.invoice.offer_id).then(function(results){
         if(results!="not found"){
@@ -218,9 +218,7 @@ function extractFromBillomatInvoice(jsonFromBillomat){
     valueMap.set('netto',jsonFromBillomat.invoice.total_net_unreduced);
     //needs to be get from billomat to encrypt id
     getClientFromId(jsonFromBillomat.invoice.client_id).then(function(results){
-        if(results!="not found"){
-            valueMap.set('client',results);
-        }
+        valueMap.set('client',results);
     })
     //need to be saved as Date.getTime() because Billomat only accpts time in millis 
     valueMap.set('due date',Date.parse(jsonFromBillomat.invoice.due_date));
@@ -272,7 +270,7 @@ function extractFromBillomatOffer(jsonFromBillomat){
     valueMap.set('name',jsonFromBillomat.offer.label);
     valueMap.set('status',jsonFromBillomat.offer.status);
     //needs to be get from billomat to encrypt id
-    valueMap.set('quotation #',jsonFromBillomat.offer.offer_number);
+    valueMap.set('quotation #',jsonFromBillomat.offer.number);
     //needs to be get from billomat to encrypt id
     getClientFromId(jsonFromBillomat.offer.client_id).then(function(results){
         if(results!="not found"){
@@ -531,10 +529,9 @@ function getOfferFromId(offerId){
     return new Promise((resolve) => {
         if(offerId == undefined) resolve ("No offer yet");
         let url = "https://"+BILLOMATID+".billomat.net/api/offers/"+offerId+"\?format=json"
-        let offerNumber;
         get(url)
         .then(function(response){
-            resolve(response.data.offer.offer_number);
+            resolve(response.data.offer.number);
         });
         resolve("not found");
     });

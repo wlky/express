@@ -8,6 +8,6 @@
     "netto":"NETTO",
     "account":"ACCOUNT",
     "invoice_date":"INVOICE DATE",
-    "mwst":"MWST",
-    "brutto":"brutto"
+    "mwst":"MwSt",
+    "brutto":"BRUTTO"
 }
