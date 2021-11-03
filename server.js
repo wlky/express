@@ -19,6 +19,7 @@ const PUTURL = "https://api.clickup.com/api/v2/task/";
     let PORT;
     let SEND;
     let BILLOMATID;
+    let BILLOMATTOKEN;
     let URL;
     let CLIENT;
     let QUOTATION;
@@ -54,8 +55,8 @@ async function main(){
     app.post('/json',(req,res)=>{
         console.log(req.body);
         //the token is supposed to be sent with the query parameters to ensure security
-        let token = req.query.token;
-        BILLOMATID = req.query.b_id;
+        let token = req.query.c_token;
+        BILLOMATTOKEN = req.query.b_token;
         console.log(BILLOMATID);
         defaults.headers.post['Authorization'] = token;
         defaults.headers.put['Authorization'] = token;
@@ -242,16 +243,18 @@ function extractFromBillomatInvoice(jsonFromBillomat){
         }
     })*/
     //this should replace the tmp code to fetch the assignee names from the billomat json
-    console.log(jsonFromBillomat.invoice.customfield.account)
     getAssigneeId(jsonFromBillomat.invoice.customfield.account).then(function(results){
+        let value = results;
+        console.log("Assignee: "+value);
         if(results!="not found"){
-            valueMap.set('account',results);
+            valueMap.set('account',value);
         }
     })
-    console.log(jsonFromBillomat.invoice.customfield.assignee)
     getAssigneeId(jsonFromBillomat.invoice.customfield.assignee).then(function(results){
+        let value = results;
+        console.log("Assignee: "+value);
         if(results!="not found"){
-            valueMap.set('assignees',results);
+            valueMap.set('assignees',value);
         }
     })
 
@@ -512,28 +515,34 @@ function createValueMap(jsonFromBillomat){
 //Billomat: GET "https://"+BILLOMATID+".billomat.net/api/clients/"+clientId+"\?format=json"
 //Find client_number
 function getClientFromId(clientId){
+    console.log("fetching client")
     return new Promise((resolve) => {
-        if(clientId == undefined) resolve ("");
-        let url = "https://"+BILLOMATID+".billomat.net/api/clients/"+clientId+"\?format=json"
-        get(url)
-        .then(function(response){
-            resolve(response.data.client.name);
-        });
-        resolve("not found");
+        if(clientId == undefined||clientId=="") resolve ("No client yet");
+        else{
+            let url = "https://"+BILLOMATID+".billomat.net/api/clients/"+clientId+"\?format=json&api_key="+BILLOMATTOKEN
+            get(url)
+            .then(function(response){
+                console.log(response.data.client.name);
+                resolve(response.data.client.name);
+            });
+        }
     })
 }
 
 //Billomat: GET "https://"+BILLOMATID+".billomat.net/api/offers/"+offerId+"\?format=json"
 //Find offer_number
 function getOfferFromId(offerId){
+    console.log("fetching offer #");
     return new Promise((resolve) => {
-        if(offerId == undefined) resolve ("No offer yet");
-        let url = "https://"+BILLOMATID+".billomat.net/api/offers/"+offerId+"\?format=json"
-        get(url)
-        .then(function(response){
-            resolve(response.data.offer.number);
-        });
-        resolve("not found");
+        if(offerId == undefined||offerId=="") resolve ("No offer yet");
+        else{
+            let url = "https://"+BILLOMATID+".billomat.net/api/offers/"+offerId+"\?format=json&api_key="+BILLOMATTOKEN;
+            get(url)
+            .then(function(response){
+                resolve(response.data.offer.number);
+            });
+            resolve("not found");
+        }
     });
 }
 
@@ -579,6 +588,7 @@ async function loadSettings(){
                 BRUTTO = settings.brutto;
                 //server settings
                 PORT = settings.port;
+                BILLOMATID = settings.billomatID;
                 console.log("settings loaded");
                 resolve(settings);
             }
