@@ -1,6 +1,7 @@
 //used to send http requests
-const { defaults, post, put, get } = pkg;
+const { defaults, post, put, get} = pkg;
 import pkg from 'axios';
+import axios from 'axios';
 import express, { json, response } from 'express';
 import fs from 'fs';
 import helmet from 'helmet';
@@ -58,10 +59,10 @@ async function main(){
         //the token is supposed to be sent with the query parameters to ensure security
         let token = req.query.c_token;
         BILLOMATTOKEN = req.query.b_token;
-        console.log(BILLOMATID);
         defaults.headers.post['Authorization'] = token;
         defaults.headers.put['Authorization'] = token;
         defaults.headers.get['Authorization'] = token;
+        defaults.headers.delete['Authorization'] = token;
         let jsonFromBillomat = req.body;
         //function to fetch the Billomat via Get request could be added to sync on script execution
         //store the useful data from the Billomat json in a map
@@ -359,53 +360,65 @@ function syncCustomFields(updatedCustomFields,actualCustomFields,taskId){
     //two for loops compare the IDs of the custom fields to spot differences
         updatedCustomFields.forEach(newElement=>{
             actualCustomFields.forEach(oldElement=>{
-                //if the IDs match we can c
                 if(newElement.id==oldElement.id){
                     //if the type of the field is a formua it updates the value itself, if the formula is gonna be changed its critical idk 
                     if(oldElement.type!="formula")
                     {
+                       
                         let toSend;
                         let send = false;
                         //link for the post request
                         let customFieldURL = "https://api.clickup.com/api/v2/task/"+taskId+"/field/"+newElement.id+"/";
-                        //this handy pice of code was added to prevent any errors while doing currency calculations --> all numbers are stored as .xx
-                        if(oldElement.type == "currency"){
-                            oldElement.value *= 100;
-                            newElement.value *= 100;
-                            oldElement.value = Math.floor(oldElement.value);
-                            newElement.value = Math.floor(newElement.value);
-                            oldElement.value /= 100;
-                            newElement.value /= 100;
+
+                        if(newElement.value==undefined){
+                            axios.delete(customFieldURL)
+                                .then(function (response) {
+                                    console.log("deleted value of custom field ("+newElement.id+") using delete with status: "+response.status);
+                                })
+                                .catch(function (error) {
+                                    console.log("Error while delete Custom Fields: ",error);
+                                });
                         }
-                        //send post request to the custom field which is gonna be changed
-                        //as soon as send = true a value string gets created and is sent at the end of the function all the states of the ifs are exclusive
-                        //-> There shouldnt be any overwriting action of toSend
-                        if(oldElement.type=="users"){
-                            if(oldElement.value!=undefined){
-                                if(newElement.value!=oldElement.value[0].id){
-                                    send=true;
+                        else{
+                            //this handy pice of code was added to prevent any errors while doing currency calculations --> all numbers are stored as .xx
+                            if(oldElement.type == "currency"){
+                                oldElement.value *= 100;
+                                newElement.value *= 100;
+                                oldElement.value = Math.floor(oldElement.value);
+                                newElement.value = Math.floor(newElement.value);
+                                oldElement.value /= 100;
+                                newElement.value /= 100;
+                            }
+                            //send post request to the custom field which is gonna be changed
+                            //as soon as send = true a value string gets created and is sent at the end of the function all the states of the ifs are exclusive
+                            //-> There shouldnt be any overwriting action of toSend
+                            if(oldElement.type=="users"){
+                                if(oldElement.value!=undefined){
+                                    if(newElement.value!=oldElement.value[0].id){
+                                        send=true;
+                                        toSend = "{\"value\"\:{\"add\":["+newElement.value+"]}}";
+                                    }
+                                }
+                                else{
+                                    send = true;
                                     toSend = "{\"value\"\:{\"add\":["+newElement.value+"]}}";
                                 }
                             }
-                            else{
+                            else if(newElement.value!=oldElement.value){
                                 send = true;
-                                toSend = "{\"value\"\:{\"add\":["+newElement.value+"]}}";
+                                toSend = "{\"value\"\:\""+newElement.value+"\"}";
                             }
-                        }
-                        else if(newElement.value!=oldElement.value){
-                            send = true;
-                            toSend = "{\"value\"\:\""+newElement.value+"\"}";
-                        }
-                        if(send){
-                            //idk why they need a post requset to update a custom value but sure, go for it
-                            console.log("trying to send: "+ toSend);
-                            post(customFieldURL,toSend)
-                            .then(function (response) {
-                                console.log("updated custom field ("+newElement.id+") using post with status: "+response.status);
-                            })
-                            .catch(function (error) {
-                                console.log("Error while sync Custom Fields: ",error);
-                            });
+                            if(send){
+                                //idk why they need a post requset to update a custom value but sure, go for it
+                                console.log("trying to send: "+ toSend+" -> "+oldElement.id);
+                                post(customFieldURL,toSend)
+                                .then(function (response) {
+                                    console.log("updated custom field ("+newElement.id+") using post with status: "+response.status);
+                                })
+                                .catch(function (error) {
+                                    console.log("Error while sync Custom Fields: ",error);
+                                });
+                            }
                         }
                     }
                 }
@@ -525,7 +538,7 @@ async function loadSettings(){
                 //sending activated or not
                 SEND = settings.send;
                 //the target url for the tasks
-                URL = "https://api.clickup.com/api/v2/list/"+settings.listID+"/task"
+                URL = "https://api.clickup.com/api/v2/list/"+process.argv[2]+"/task"
                 //custom field names
                 CLIENT = settings.client;
                 QUOTATION = settings.quotation_number;
@@ -537,7 +550,7 @@ async function loadSettings(){
                 BRUTTO = settings.brutto;
                 //server settings
                 PORT = settings.port;
-                BILLOMATID = settings.billomatID;
+                BILLOMATID = process.argv[3];
                 console.log("settings loaded");
                 resolve(settings);
             }
