@@ -244,11 +244,7 @@ function extractFromBillomatOffer(jsonFromBillomat){
     //needs to be get from billomat to encrypt id
     valueMap.set('quotation #',jsonFromBillomat.offer.number);
     //needs to be get from billomat to encrypt id
-    getClientFromId(jsonFromBillomat.offer.client_id).then(function(results){
-        if(results!="not found"){
-            valueMap.set('client',results);
-        }
-    })
+    getClientFromId(jsonFromBillomat.offer.client_id);
 
     valueMap.set('netto',jsonFromBillomat.offer.total_net_unreduced);
 
@@ -258,8 +254,8 @@ function extractFromBillomatOffer(jsonFromBillomat){
         valueMap.set('name',"default");
     }
     //this should replace the tmp code to fetch the assignee names from the billomat json
-    getAccountId(jsonFromBillomat.invoice.customfield.account);
-    getAssigneeId(jsonFromBillomat.invoice.customfield.assingee);
+    getAccountId(jsonFromBillomat.offer.customfield.account);
+    getAssigneeId(jsonFromBillomat.offer.customfield.assingee);
 
     console.log(valueMap);
 
