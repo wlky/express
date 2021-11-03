@@ -29,6 +29,7 @@ const PUTURL = "https://api.clickup.com/api/v2/task/";
     let INVOICEDATE;
     let MWST;
     let BRUTTO;
+    let valueMap = new Map();
 /* ~ End ~ */
 
 //the main function of the app, this is running the server
@@ -64,16 +65,16 @@ async function main(){
         let jsonFromBillomat = req.body;
         //function to fetch the Billomat via Get request could be added to sync on script execution
         //store the useful data from the Billomat json in a map
-        let valueMap = createValueMap(jsonFromBillomat);
+        initValueMap(jsonFromBillomat);
         //put the map into it to determine if it is new data or updated data and send the http request 
-        determinePostOrPut(valueMap);
+        determinePostOrPut();
         res.json(jsonFromBillomat);
     });
 }
 
 //takes a map of values and adds them in a json file for the http request body
 //the value map might be swapped
-function createJsonForClickUp(valueMap,customFieldIds){
+function createJsonForClickUp(customFieldIds){
     console.info("Starting to create a new .json file for ClickUp.")
     console.log(customFieldIds.get('netto'));
     let httpRequest = JSON.stringify(
@@ -138,7 +139,7 @@ function createJsonForClickUp(valueMap,customFieldIds){
 }
 
 //this only exists because click up is not very cool, to add assignees you need to completely change the structure
-function createUpdateJsonForClickUp(valueMap,customFieldIds){
+function createUpdateJsonForClickUp(customFieldIds){
     console.info("Starting to create an updated .json file for ClickUp.")
     let httpRequest = JSON.stringify(
         { 
@@ -160,43 +161,43 @@ function createUpdateJsonForClickUp(valueMap,customFieldIds){
             //multiple custom fields may be added later
             "custom_fields": [ 
                 { 
-                    "id":customFieldIds.get('client'), 
+                    "id":customFieldIds.get(CLIENT), 
                     "value":valueMap.get('client')  
                 },    
                 { 
-                    "id":customFieldIds.get('quotation #'), 
+                    "id":customFieldIds.get(QUOTATION), 
                     "value": valueMap.get('quotation #') 
                 },
                 { 
-                    "id":customFieldIds.get('invoice #'), 
+                    "id":customFieldIds.get(INVOICE), 
                     "value": valueMap.get('invoice #')
                 } ,
                 { 
-                    "id":customFieldIds.get('netto'), 
+                    "id":customFieldIds.get(NETTO), 
                     "value": valueMap.get('netto')
                 }, 
                 /*{ 
-                    "id":customFieldIds.get('account'), 
-                    "value": valueMap.get('account')
-                },*/ 
+                    "id":customFieldIds.get(ACCOUNT), 
+                    "value": {"add":[ valueMap.get('account') ]}
+                }, */
                 { 
-                    "id":customFieldIds.get('invoice date'), 
+                    "id":customFieldIds.get(INVOICEDATE), 
                     "value": valueMap.get('invoice date')
                 }/*,
                 { 
-                    "id":customFieldIds.get('mwst'), 
+                    "id":customFieldIds.get(MWST), 
                     //calculates 19% of the "netto" price
                     "value":"field(\"netto\")*0.19"
                 },
                 { 
-                    "id":customFieldIds.get('brutto'), 
+                    "id":customFieldIds.get(BRUTTO), 
                     //calculates the "brutto" price
                     "value":"field(\"netto\")*1.19"
                 }*/
             ] 
         } 
     );
-    console.info("Created a .json file for ClickUp.")
+    console.info("Created a .json file for ClickUp")
     return httpRequest;
 }
 
@@ -206,21 +207,14 @@ function createUpdateJsonForClickUp(valueMap,customFieldIds){
 function extractFromBillomatInvoice(jsonFromBillomat){
     console.info("Extracting data from invoice.json input.")
     //stored in a map for easy access on attributes
-    let valueMap = new Map();
     valueMap.set('name',jsonFromBillomat.invoice.label);
     valueMap.set('status',jsonFromBillomat.invoice.status);
     valueMap.set('invoice #',jsonFromBillomat.invoice.number);
-    //needs to be get from billomat to encrypt id
-    getOfferFromId(jsonFromBillomat.invoice.offer_id).then(function(results){
-        if(results!="not found"){
-            valueMap.set('quotation #',results);
-        }
-    })
     valueMap.set('netto',jsonFromBillomat.invoice.total_net_unreduced);
     //needs to be get from billomat to encrypt id
-    getClientFromId(jsonFromBillomat.invoice.client_id).then(function(results){
-        valueMap.set('client',results);
-    })
+    getClientFromId(jsonFromBillomat.invoice.client_id);
+    //needs to be get from billomat to encrypt id
+    getOfferFromId(jsonFromBillomat.invoice.offer_id);
     //need to be saved as Date.getTime() because Billomat only accpts time in millis 
     valueMap.set('due date',Date.parse(jsonFromBillomat.invoice.due_date));
     valueMap.set('invoice date',Date.parse(jsonFromBillomat.invoice.date))
@@ -231,37 +225,13 @@ function extractFromBillomatInvoice(jsonFromBillomat){
         valueMap.set('name',"default");
     }
 
-    //for now the assignees cant be set from billomat, maybe this will be added later so for now we will use a tmp person which is hard coded
-    /*getAssigneeId("Lucas Reisser").then(function(results){
-        if(results!="not found"){
-            valueMap.set('account',results);
-        }
-    })
-    getAssigneeId("Lucas Reisser").then(function(results){
-        if(results!="not found"){
-            valueMap.set('assignees',results);
-        }
-    })*/
     //this should replace the tmp code to fetch the assignee names from the billomat json
-    getAssigneeId(jsonFromBillomat.invoice.customfield.account).then(function(results){
-        let value = results;
-        console.log("Assignee: "+value);
-        if(results!="not found"){
-            valueMap.set('account',value);
-        }
-    })
-    getAssigneeId(jsonFromBillomat.invoice.customfield.assignee).then(function(results){
-        let value = results;
-        console.log("Assignee: "+value);
-        if(results!="not found"){
-            valueMap.set('assignees',value);
-        }
-    })
+    getAccountId(jsonFromBillomat.invoice.customfield.account);
+    getAssigneeId(jsonFromBillomat.invoice.customfield.assignee);
 
     console.log(valueMap);
 
     console.info("Extracting data from invoice.json input completed.")
-    return valueMap;
 }
 
 //this function is called when billomat sends an update on an offer
@@ -269,7 +239,6 @@ function extractFromBillomatInvoice(jsonFromBillomat){
 function extractFromBillomatOffer(jsonFromBillomat){
     console.info("Extracting data from offer.json input.")
     //stored in a map for easy access on attributes
-    let valueMap = new Map();
     valueMap.set('name',jsonFromBillomat.offer.label);
     valueMap.set('status',jsonFromBillomat.offer.status);
     //needs to be get from billomat to encrypt id
@@ -288,39 +257,18 @@ function extractFromBillomatOffer(jsonFromBillomat){
         console.error("No Project Name was found, using default value!")
         valueMap.set('name',"default");
     }
-
-    //for now the assignees cant be set from billomat, maybe this will be added later so for now we will use a tmp person which is hard coded
-    /*getAssigneeId("Lucas Reisser").then(function(results){
-        if(results!="not found"){
-            valueMap.set('account',results);
-        }
-    })
-    getAssigneeId("Lucas Reisser").then(function(results){
-        if(results!="not found"){
-            valueMap.set('assignees',results);
-        }
-    })*/
     //this should replace the tmp code to fetch the assignee names from the billomat json
-    getAssigneeId(jsonFromBillomat.invoice.customfield.account).then(function(results){
-        if(results!="not found"){
-            valueMap.set('account',results);
-        }
-    })
-    getAssigneeId(jsonFromBillomat.invoice.customfield.assingee).then(function(results){
-        if(results!="not found"){
-            valueMap.set('assignees',results);
-        }
-    })
+    getAccountId(jsonFromBillomat.invoice.customfield.account);
+    getAssigneeId(jsonFromBillomat.invoice.customfield.assingee);
 
     console.log(valueMap);
 
     console.info("Extracting data from offer.json input completed.")
-    return valueMap;
 }
 
 //decides and sends a post or put request via a get request checking if the task is already created or not
 //further more does it send the request and call the method to fetch custom field ids
-async function determinePostOrPut(valueMap){
+async function determinePostOrPut(){
     //creates the Json file which is gonna be sent to clickup
     let customFieldIds = await getCustomFieldIds();
     if(customFieldIds==undefined){
@@ -331,13 +279,13 @@ async function determinePostOrPut(valueMap){
         if(task!=undefined){
             console.info("Task was found, updating the existing one.");
             if(SEND){
-                sendPutRequest(createUpdateJsonForClickUp(valueMap,customFieldIds),task);
+                sendPutRequest(createUpdateJsonForClickUp(customFieldIds),task);
             }
         }
         else{
             console.info("Task wasn't found, creating a new one.");
             if(SEND){
-                sendPostRequest(createJsonForClickUp(valueMap,customFieldIds));
+                sendPostRequest(createJsonForClickUp(customFieldIds));
             }
        }
     }
@@ -411,6 +359,7 @@ async function checkIfTaskExistsByName(name){
 
 //This updates custom fields since it cant be done with a "normal" PUT request
 function syncCustomFields(updatedCustomFields,actualCustomFields,taskId){
+    console.log("updating custom fields")
     //two for loops compare the IDs of the custom fields to spot differences
         updatedCustomFields.forEach(newElement=>{
             actualCustomFields.forEach(oldElement=>{
@@ -453,6 +402,7 @@ function syncCustomFields(updatedCustomFields,actualCustomFields,taskId){
                         }
                         if(send){
                             //idk why they need a post requset to update a custom value but sure, go for it
+                            console.log("trying to send: "+ toSend);
                             post(customFieldURL,toSend)
                             .then(function (response) {
                                 console.log("updated custom field ("+newElement.id+") using post with status: "+response.status);
@@ -501,7 +451,7 @@ function analyzeType(jsonFromBillomat){
 }
 
 //this creates the value map from the json from Billomat inorder to put the values into the ClickUp json
-function createValueMap(jsonFromBillomat){
+function initValueMap(jsonFromBillomat){
     //simple switch case to determine which method should be called
     switch (analyzeType(jsonFromBillomat)) {
         case "invoice":
@@ -516,49 +466,52 @@ function createValueMap(jsonFromBillomat){
 //Find client_number
 function getClientFromId(clientId){
     console.log("fetching client")
-    return new Promise((resolve) => {
-        if(clientId == undefined||clientId=="") resolve ("No client yet");
-        else{
-            let url = "https://"+BILLOMATID+".billomat.net/api/clients/"+clientId+"\?format=json&api_key="+BILLOMATTOKEN
-            get(url)
-            .then(function(response){
-                console.log(response.data.client.name);
-                resolve(response.data.client.name);
-            });
-        }
-    })
-}
+    if(!(clientId == undefined||clientId=="")){;
+        let url = "https://"+BILLOMATID+".billomat.net/api/clients/"+clientId+"\?format=json&api_key="+BILLOMATTOKEN;
+        get(url)
+        .then(function(response){
+            valueMap.set('client',response.data.client.name);
+        })
+    }
+};
 
 //Billomat: GET "https://"+BILLOMATID+".billomat.net/api/offers/"+offerId+"\?format=json"
 //Find offer_number
 function getOfferFromId(offerId){
     console.log("fetching offer #");
-    return new Promise((resolve) => {
-        if(offerId == undefined||offerId=="") resolve ("No offer yet");
-        else{
-            let url = "https://"+BILLOMATID+".billomat.net/api/offers/"+offerId+"\?format=json&api_key="+BILLOMATTOKEN;
-            get(url)
-            .then(function(response){
-                resolve(response.data.offer.number);
-            });
-            resolve("not found");
-        }
-    });
+    if(!(offerId == undefined||offerId=="")){;
+        let url = "https://"+BILLOMATID+".billomat.net/api/offers/"+offerId+"\?format=json&api_key="+BILLOMATTOKEN;
+        get(url)
+        .then(function(response){
+            valueMap.set('quotation #',response.data.offer.number);
+        })
+    }
 }
 
 //this does a get request on https://api.clickup.com/api/v2/team/2671386/ and filter the incoming response.data.team.members to get assigneeName == user.username
 function getAssigneeId(assigneeName){
-    return new Promise((resolve) => {
-        get("https://api.clickup.com/api/v2/team/2671386/")
-        .then(function(response){
-            response.data.team.members.forEach(member => {
-                if(member.user.username == assigneeName){
-                    //resolve(member.user.id);
-                    resolve("not found");
-                }
-            });
-            resolve("not found");
-        })
+    console.log("fetching assignee");
+    get("https://api.clickup.com/api/v2/team/2671386/")
+    .then(function(response){
+        response.data.team.members.forEach(member => {
+            if(member.user.username == assigneeName){
+                //resolve(member.user.id);
+                valueMap.set('assignees',member.user.id);
+            }
+        });
+    })
+}
+
+function getAccountId(assigneeName){
+    console.log("fetching account");
+    get("https://api.clickup.com/api/v2/team/2671386/")
+    .then(function(response){
+        response.data.team.members.forEach(member => {
+            if(member.user.username == assigneeName){
+                //resolve(member.user.id);
+                valueMap.set('account',member.user.id);
+            }
+        });
     })
 }
 
