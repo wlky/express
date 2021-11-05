@@ -203,7 +203,7 @@ function createUpdateJsonForClickUp(customFieldIds){
 }
 
 //this function is called when billomat sends an update on an invoice
-//the output is a value map with the needed information to create a .json for clickup
+//It adds information to a value map with the needed information to create a .json for clickup
 //since this knows that its extracting infos from an invoice it can fetch infos from billomat to complete missing infos
 function extractFromBillomatInvoice(jsonFromBillomat){
     console.info("Extracting data from invoice.json input.")
@@ -211,7 +211,7 @@ function extractFromBillomatInvoice(jsonFromBillomat){
     valueMap.set('name',jsonFromBillomat.invoice.label);
     valueMap.set('status',jsonFromBillomat.invoice.status);
     valueMap.set('invoice #',jsonFromBillomat.invoice.number);
-    valueMap.set('netto',jsonFromBillomat.invoice.total_net_unreduced);
+    valueMap.set('netto',jsonFromBillomat.invoice.total_net);
     //needs to be get from billomat to encrypt id
     getClientFromId(jsonFromBillomat.invoice.client_id);
     //needs to be get from billomat to encrypt id
@@ -236,7 +236,7 @@ function extractFromBillomatInvoice(jsonFromBillomat){
 }
 
 //this function is called when billomat sends an update on an offer
-//the output is a value map with the needed information to create a .json for clickup
+//It adds information to a value map with the needed information to create a .json for clickup
 function extractFromBillomatOffer(jsonFromBillomat){
     console.info("Extracting data from offer.json input.")
     //stored in a map for easy access on attributes
@@ -247,7 +247,7 @@ function extractFromBillomatOffer(jsonFromBillomat){
     //needs to be get from billomat to encrypt id
     getClientFromId(jsonFromBillomat.offer.client_id);
 
-    valueMap.set('netto',jsonFromBillomat.offer.total_net_unreduced);
+    valueMap.set('netto',jsonFromBillomat.offer.total_net);
 
     //sets a default value since the undefined state would be a "400 - Bad Request"
     if(valueMap.get('name')==undefined){
@@ -266,7 +266,7 @@ function extractFromBillomatOffer(jsonFromBillomat){
 //decides and sends a post or put request via a get request checking if the task is already created or not
 //further more does it send the request and call the method to fetch custom field ids
 async function determinePostOrPut(){
-    //creates the Json file which is gonna be sent to clickup
+    //only start if custom fields were loaded to avoid issues
     let customFieldIds = await getCustomFieldIds();
     if(customFieldIds==undefined){
         console.error("Error while fetching customFieldIDs, couldnt create a .json for ClickUp!");
@@ -370,6 +370,7 @@ function syncCustomFields(updatedCustomFields,actualCustomFields,taskId){
                         //link for the post request
                         let customFieldURL = "https://api.clickup.com/api/v2/task/"+taskId+"/field/"+newElement.id+"/";
 
+                        //deletes the value of a custom field if it isnt included in the new element
                         if(newElement.value==undefined){
                             axios.delete(customFieldURL)
                                 .then(function (response) {
@@ -472,7 +473,8 @@ function initValueMap(jsonFromBillomat){
 
 //The following two functions will be introduced as soon as we have a billomat id to put in, it would be smart if we send this id via quary parameters
 //Billomat: GET "https://"+BILLOMATID+".billomat.net/api/clients/"+clientId+"\?format=json"
-//Find client_number
+//The Client ID from Billomat is given
+//Sets the Client Name in the value map inorder to include it in the json
 function getClientFromId(clientId){
     console.log("fetching client")
     if(!(clientId == undefined||clientId=="")){;
@@ -485,7 +487,8 @@ function getClientFromId(clientId){
 };
 
 //Billomat: GET "https://"+BILLOMATID+".billomat.net/api/offers/"+offerId+"\?format=json"
-//Find offer_number
+//The offer ID from Billomat is given
+//Sets the Offernumber in the value map inorder to include it in the json
 function getOfferFromId(offerId){
     console.log("fetching offer #");
     if(!(offerId == undefined||offerId=="")){;
@@ -498,6 +501,8 @@ function getOfferFromId(offerId){
 }
 
 //this does a get request on https://api.clickup.com/api/v2/team/2671386/ and filter the incoming response.data.team.members to get assigneeName == user.username
+//The Assignee Name from Billomat custom field is given
+//Sets the Assignee ID (ClickUp)  in the value map inorder to include it in the json
 function getAssigneeId(assigneeName){
     console.log("fetching assignee");
     get("https://api.clickup.com/api/v2/team/2671386/")
@@ -511,6 +516,10 @@ function getAssigneeId(assigneeName){
     })
 }
 
+
+//this does a get request on https://api.clickup.com/api/v2/team/2671386/ and filter the incoming response.data.team.members to get assigneeName == user.username
+//The Accountant Name from Billomat custom field is given
+//Sets the Account ID (ClickUp)  in the value map inorder to include it in the json
 function getAccountId(assigneeName){
     console.log("fetching account");
     get("https://api.clickup.com/api/v2/team/2671386/")
