@@ -210,7 +210,8 @@ function extractFromBillomatInvoice(jsonFromBillomat){
     //stored in a map for easy access on attributes
     valueMap.set('name',jsonFromBillomat.invoice.label);
     valueMap.set('status',jsonFromBillomat.invoice.status);
-    valueMap.set('invoice #',jsonFromBillomat.invoice.number);
+    let invoiceNumber = jsonFromBillomat.invoice.number;
+    valueMap.set('invoice #',invoiceNumber.replace("RE",""));
     valueMap.set('netto',jsonFromBillomat.invoice.total_net);
     //needs to be get from billomat to encrypt id
     getClientFromId(jsonFromBillomat.invoice.client_id);
@@ -243,7 +244,8 @@ function extractFromBillomatOffer(jsonFromBillomat){
     valueMap.set('name',jsonFromBillomat.offer.label);
     valueMap.set('status',jsonFromBillomat.offer.status);
     //needs to be get from billomat to encrypt id
-    valueMap.set('quotation #',jsonFromBillomat.offer.number);
+    let offerNumber = jsonFromBillomat.offer.offer_number;
+    valueMap.set('quotation #',offerNumber.replace("AN", ""));
     //needs to be get from billomat to encrypt id
     getClientFromId(jsonFromBillomat.offer.client_id);
 
@@ -495,7 +497,8 @@ function getOfferFromId(offerId){
         let url = "https://"+BILLOMATID+".billomat.net/api/offers/"+offerId+"\?format=json&api_key="+BILLOMATTOKEN;
         get(url)
         .then(function(response){
-            valueMap.set('quotation #',response.data.offer.number);
+            let offerNumber = response.data.offer.offer_number;
+            valueMap.set('quotation #',offerNumber.replace("AN", ""));
         })
     }
 }
