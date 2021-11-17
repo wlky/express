@@ -210,7 +210,7 @@ function extractFromBillomatInvoice(jsonFromBillomat){
     //stored in a map for easy access on attributes
     valueMap.set('name',jsonFromBillomat.invoice.label);
     valueMap.set('status',jsonFromBillomat.invoice.status);
-    let invoiceNumber = jsonFromBillomat.invoice.number;
+    let invoiceNumber = jsonFromBillomat.invoice.invoice_number;
     valueMap.set('invoice #',invoiceNumber.replace("RE",""));
     valueMap.set('netto',jsonFromBillomat.invoice.total_net);
     //needs to be get from billomat to encrypt id
