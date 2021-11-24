@@ -5,7 +5,7 @@ import axios from 'axios';
 import express, { json, response } from 'express';
 import fs from 'fs';
 import helmet from 'helmet';
-
+import * as child from 'child_process';
 const app = express();
 
 //settings for the axios headers, those sould be fine and stay as they are
@@ -52,6 +52,21 @@ async function main(){
     app.get("/", function (req, res) {
         res.send("<h1>Hello World 1</h1>")
     })
+    
+    app.get("/update", function(req,res){
+        child.exec('sh /home/ubuntu/billomat/update.sh',
+        (error, stdout, stderr) => {
+            console.log(stdout);
+            console.log(stderr);
+            if (error !== null) {
+                console.log(`exec error: ${error}`);
+                res.send("<h1>${error}</h1>");
+            }else{
+                res.send("<h1>${stdout}</h1>");
+            }
+        });
+    });
+
     
     //this gets called on each post request
     app.post('/json',(req,res)=>{
