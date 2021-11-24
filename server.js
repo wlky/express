@@ -208,7 +208,7 @@ function createUpdateJsonForClickUp(customFieldIds){
 function extractFromBillomatInvoice(jsonFromBillomat){
     console.info("Extracting data from invoice.json input.")
     //stored in a map for easy access on attributes
-    valueMap.set('name',jsonFromBillomat.invoice.label);
+    valueMap.set('name',jsonFromBillomat.invoice.intro.split("\"")[1]);
     valueMap.set('status',jsonFromBillomat.invoice.status);
     let invoiceNumber = jsonFromBillomat.invoice.invoice_number;
     valueMap.set('invoice #',invoiceNumber.replace("RE",""));
